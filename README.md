@@ -52,6 +52,6 @@ cargo run
 Carte Aléatoire : La carte est générée de manière aléatoire avec des obstacles et une base.\
 Exploration et Extraction : Les robots explorateurs trouvent des ressources et les robots extracteurs les ramènent à la base.\
 Brouillard de Guerre : Les robots dévoilent le brouillard de guerre autour d'eux en explorant la carte.\
-Scores : Les scores pour les cristaux et l'énergie collectés sont affichés à l'écran.\
+Scores : Les scores pour les cristaux et l'énergie collectés sont affichés à l'écran.
 ## Auteur
 Projet créé par Valentin Roche, Hubert Truong, Archibald Sabatier, Milo Roche et Nicolas Floris.
