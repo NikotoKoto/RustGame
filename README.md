@@ -25,7 +25,7 @@ Ouvrez votre terminal et créez un nouveau projet :
 cargo new nom_du_projet
 cd nom_du_projet
 ```
-`### Ajouter ggez comme dépendance
+### Ajouter ggez comme dépendance
 Ouvrez le fichier Cargo.toml dans votre projet et ajoutez ggez, noise et rand à la section [dependencies] :
 
 ```
