@@ -1,4 +1,4 @@
-# Projet de Carte Aléatoire avec Robots Explorateurs et Extracteurs
+# Projet Rust Game
 
 ## Description
 
