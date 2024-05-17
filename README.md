@@ -54,4 +54,4 @@ Exploration et Extraction : Les robots explorateurs trouvent des ressources et l
 Brouillard de Guerre : Les robots dévoilent le brouillard de guerre autour d'eux en explorant la carte.
 Scores : Les scores pour les cristaux et l'énergie collectés sont affichés à l'écran.
 ## Auteur
-Projet créé par Valentin Roche, Hubert Truang, Archibald Sabatier, Milo Roche et Nicolas Floris.
+Projet créé par Valentin Roche, Hubert Truong, Archibald Sabatier, Milo Roche et Nicolas Floris.
