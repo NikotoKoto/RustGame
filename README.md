@@ -48,6 +48,12 @@ cd nom_du_projet
 ```
 cargo run
 ```
+## Exécuter les tests
+### Commande pour lancer les tests (certains tests ne sont pas fonctionnels) :
+
+```
+cargo test
+```
 ## Fonctionnalités
 Carte Aléatoire : La carte est générée de manière aléatoire avec des obstacles et une base.\
 Exploration et Extraction : Les robots explorateurs trouvent des ressources et les robots extracteurs les ramènent à la base.\
