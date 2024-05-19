@@ -593,6 +593,178 @@ impl event::EventHandler<ggez::GameError> for GameState {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_approx_eq::assert_approx_eq;
+    use rstest::rstest;
+    use ggez::conf;
+
+    fn create_test_context() -> (Context, GameState) {
+        let seed = 0;
+        let cb = ggez::ContextBuilder::new("Rust Game Test", "ggez")
+            .window_setup(conf::WindowSetup::default().title("Test"))
+            .window_mode(conf::WindowMode::default().dimensions(800.0, 600.0));
+        let (mut ctx, event_loop) = cb.build().unwrap();
+        let state = GameState::new(&mut ctx, seed).unwrap();
+        (ctx, state)
+    }
+
+    #[test]
+    fn test_heuristic() {
+        assert_eq!(GameState::heuristic((0, 0), (3, 4)), 7);
+        assert_eq!(GameState::heuristic((2, 3), (5, 1)), 5);
+    }
+
+    #[test]
+    fn test_wrap_position() {
+        let (mut ctx, game_state) = create_test_context();
+        assert_eq!(game_state.wrap_position(39, 29), (39, 29));
+        assert_eq!(game_state.wrap_position(40, 30), (0, 0));
+        assert_eq!(game_state.wrap_position(41, 31), (1, 1));
+    }
+
+    #[test]
+    fn test_move_robot_randomly() {
+        let map = vec![vec![Cell::Empty; 5]; 5];
+        let directions = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+        let (x, y) = GameState::move_robot_randomly(2, 2, &directions, &map, 5, 5);
+        assert!(x < 5 && y < 5);
+    }
+
+    #[rstest]
+    #[case(Cell::Energy, true)]
+    #[case(Cell::Crystal, true)]
+    #[case(Cell::Obstacle, false)]
+    fn test_place_randomly(#[case] cell_type: Cell, #[case] expected: bool) {
+        let mut map = vec![vec![Cell::Empty; 5]; 5];
+        let mut rng = StdRng::seed_from_u64(0);
+        let result = place_randomly(&mut map, &mut rng, cell_type.clone(), 1);
+        assert_eq!(result.is_some(), expected);
+        if let Some((x, y)) = result {
+            assert_eq!(map[y][x], cell_type);
+        }
+    }
+
+    #[test]
+    fn test_a_star_pathfinding() {
+        let (mut ctx, mut game_state) = create_test_context();
+        game_state.map[1][0] = Cell::Obstacle;
+        game_state.map[1][1] = Cell::Obstacle;
+        game_state.map[1][2] = Cell::Obstacle;
+        game_state.map[0][2] = Cell::Obstacle;
+
+        if let Some(path) = game_state.a_star_pathfinding((0, 0), (2, 2), false) {
+            assert_eq!(path, vec![(0, 0), (0, 1), (0, 2), (1, 2), (2, 2)]);
+        } else {
+            panic!("Pathfinding failed");
+        }
+    }
+
+    #[test]
+    fn test_update_robot() {
+        let (mut ctx, mut game_state) = create_test_context();
+        let mut robot = Robot {
+            x: game_state.base_position.0,
+            y: game_state.base_position.1,
+            role: Role::Explorer,
+            resource_coords: None,
+            carrying: None,
+            speed: Robot::default_speed(),
+            move_counter: 0,
+        };
+
+        game_state.update_robot(&mut robot);
+        assert_eq!(robot.move_counter, 1);
+
+        game_state.update_robot(&mut robot);
+        assert!(robot.x != game_state.base_position.0 || robot.y != game_state.base_position.1);
+    }
+
+    #[test]
+    fn test_check_game_over() {
+        let (mut ctx, mut game_state) = create_test_context();
+        assert!(!game_state.check_game_over());
+
+        game_state.map.iter_mut().flatten().for_each(|cell| *cell = Cell::Empty);
+        assert!(game_state.check_game_over());
+    }
+
+    #[test]
+    fn test_robot_finds_resource() {
+        let (mut ctx, mut game_state) = create_test_context();
+        let mut robot = Robot {
+            x: game_state.base_position.0,
+            y: game_state.base_position.1,
+            role: Role::Explorer,
+            resource_coords: None,
+            carrying: None,
+            speed: Robot::default_speed(),
+            move_counter: 0,
+        };
+
+        game_state.map[2][2] = Cell::Crystal;
+        robot.x = 1;
+        robot.y = 1;
+        game_state.update_robot(&mut robot);
+
+        assert_eq!(robot.resource_coords, Some((2, 2)));
+        assert_eq!(game_state.map[2][2], Cell::ReservedCrystal);
+    }
+
+    #[test]
+    fn test_robot_collects_and_delivers_resource() {
+        let (mut ctx, mut game_state) = create_test_context();
+        let mut robot = Robot {
+            x: game_state.base_position.0,
+            y: game_state.base_position.1,
+            role: Role::Extractor,
+            resource_coords: Some((2, 2)),
+            carrying: None,
+            speed: Robot::default_speed(),
+            move_counter: 0,
+        };
+
+        game_state.map[2][2] = Cell::ReservedCrystal;
+        robot.x = 2;
+        robot.y = 2;
+        game_state.update_robot(&mut robot);
+
+        assert_eq!(robot.carrying, Some(Cell::Crystal));
+        assert_eq!(game_state.map[2][2], Cell::Empty);
+
+        robot.x = 1;
+        robot.y = 1;
+        game_state.update_robot(&mut robot);
+        robot.x = game_state.base_position.0;
+        robot.y = game_state.base_position.1;
+        game_state.update_robot(&mut robot);
+
+        assert_eq!(game_state.crystal_score, 1);
+        assert_eq!(robot.role, Role::Explorer);
+        assert_eq!(robot.carrying, None);
+        assert_eq!(robot.resource_coords, None);
+    }
+
+    #[test]
+    fn test_robot_discovers_map() {
+        let (mut ctx, mut game_state) = create_test_context();
+        let mut robot = Robot {
+            x: game_state.base_position.0,
+            y: game_state.base_position.1,
+            role: Role::Explorer,
+            resource_coords: None,
+            carrying: None,
+            speed: Robot::default_speed(),
+            move_counter: 0,
+        };
+
+        game_state.update_robot(&mut robot);
+
+        assert!(game_state.discovered[robot.y][robot.x]);
+    }
+}
+
 fn main() -> GameResult {
     let seed = rand::thread_rng().gen();
     let cb = ggez::ContextBuilder::new("Rust Game", "ggez")

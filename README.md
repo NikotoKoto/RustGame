@@ -39,7 +39,7 @@ rand = "0.8.4"
 Clonez ce dépôt dans votre répertoire local :
 
 ```
-git clone https://github.com/votre-utilisateur/nom_du_projet.git
+git clone https://github.com/NikotoKoto/RustGame.git
 cd nom_du_projet
 ```
 ## Compiler et exécuter le projet
